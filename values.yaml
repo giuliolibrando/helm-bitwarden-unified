@@ -1,0 +1,186 @@
+# Default values for helm-bitwarden-unified.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: bitwarden/self-host
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "beta"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8443
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: bitwarden.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+environment:
+  BW_DOMAIN: bitwarden.example.com
+
+  ###
+  # Database Settings
+  # These should match mariadb below
+  ###
+  BW_DB_PROVIDER: mariadb
+  BW_DB_SERVER: "bitwarden-mariadb"
+  BW_DB_DATABASE: "bitwarden"
+  BW_DB_USERNAME: "bitwarden"
+  BW_DB_PASSWORD: "Passw0rd"
+
+  ###
+  # Bitwarden Install Info
+  # Get your ID and key from https://bitwarden.com/host/
+  ###
+  BW_INSTALLATION_ID: ""
+  BW_INSTALLATION_KEY: ""
+
+  ###
+  # Bitwarden Settings
+  ###
+  BW_PORT_HTTP: 8080
+  BW_PORT_HTTPS: 8443
+  BW_ENABLE_EVENTS: "true"
+  BW_ENABLE_SCIM: "false"
+  BW_ENABLE_SSO: "true"
+  BW_ENABLE_KEY_CONNECTOR: "true"
+
+  ###
+  # Email Settings
+  ###
+  globalSettings__mail__replyToEmail: "noreply@example.com"
+  globalSettings__mail__smtp__host: "mail.example.com"
+  globalSettings__mail__smtp__port: "587"
+  globalSettings__mail__smtp__username: "user@example.com"
+  globalSettings__mail__smtp__password: "Passw0rd"
+
+  # List of Admin email Addresses for admin login ability
+  adminSettings__admins: "admin@example.com"
+
+  ###
+  # letsencrypt SSL
+  ###
+  BW_ENABLE_SSL: "true"
+  ssl_certificate_path: "/etc/bitwarden/ssl.crt"
+  ssl_key_path: "/etc/bitwarden/ssl.key"
+
+  # Do Not Change this line
+  BW_KEY_CONNECTOR_INTERNAL_URL: "http://localhost:5100"
+
+keyConnector:
+  environment:
+    # Reference: https://github.com/bitwarden/key-connector
+    keyConnectorSettings__rsaKey__provider: awskms
+    keyConnectorSettings__rsaKey__awsAccessKeyId: AccessKeyId
+    keyConnectorSettings__rsaKey__awsAccessKeySecret: AccessKeySecret
+    keyConnectorSettings__rsaKey__awsRegion: RegionName
+    keyConnectorSettings__rsaKey__awsKeyId: KeyId
+    # URL to your bitwarden instance
+    keyConnectorSettings__webVaultUri: https://bitwarden.example.com
+    # Do Not Change this line
+    keyConnectorSettings__identityServerUri: http://localhost:5005
+    # Do Not Change this line
+    ASPNETCORE_URLS: http://+:5100
+
+mariadb:
+  ## @param mariadb.enabled Deploy a MariaDB server to satisfy the applications database requirements
+  ## To use an external database set this to false and configure the `externalDatabase.*` parameters
+  ##
+  enabled: true
+  ## @param mariadb.architecture MariaDB architecture. Allowed values: `standalone` or `replication`
+  ##
+  architecture: standalone
+  ## MariaDB Authentication parameters
+  ## @param mariadb.auth.rootPassword MariaDB root password
+  ## @param mariadb.auth.database MariaDB custom database
+  ## @param mariadb.auth.username MariaDB custom user name
+  ## @param mariadb.auth.password MariaDB custom user password
+  ## ref: https://github.com/bitnami/containers/tree/main/bitnami/mariadb#setting-the-root-password-on-first-run
+  ##      https://github.com/bitnami/containers/blob/main/bitnami/mariadb/README.md#creating-a-database-on-first-run
+  ##      https://github.com/bitnami/containers/blob/main/bitnami/mariadb/README.md#creating-a-database-user-on-first-run
+  ##
+  auth:
+    rootPassword: ""
+    database: bitwarden
+    username: bitwarden
+    password: "Passw0rd"
+  ## MariaDB Primary configuration
+  ##
+  primary:
+    ## MariaDB Primary Persistence parameters
+    ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    ## @param mariadb.primary.persistence.enabled Enable persistence on MariaDB using PVC(s)
+    ## @param mariadb.primary.persistence.storageClass Persistent Volume storage class
+    ## @param mariadb.primary.persistence.accessModes [array] Persistent Volume access modes
+    ## @param mariadb.primary.persistence.size Persistent Volume size
+    ##
+    persistence:
+      enabled: true
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 8Gi

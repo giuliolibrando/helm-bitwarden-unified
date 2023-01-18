@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helm-bitwarden-unified.fullname" . }}
+  labels:
+    {{- include "helm-bitwarden-unified.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "helm-bitwarden-unified.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "helm-bitwarden-unified.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "helm-bitwarden-unified.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.environment.BW_PORT_HTTP }}
+              protocol: TCP
+            - name: https
+              containerPort: {{ .Values.environment.BW_PORT_HTTPS }}
+              protocol: TCP
+          volumeMounts:
+            - name: certs
+              subPath: tls.crt
+              mountPath: /etc/bitwarden/ssl.crt
+              readOnly: true
+            - name: certs
+              subPath: tls.key
+              mountPath: /etc/bitwarden/ssl.key
+              readOnly: true
+            - name: bitwarden-data
+              mountPath: /etc/bitwarden
+            - name: bitwarden-files
+              mountPath: /etc/hbs/nginx-config.hbs
+              subPath: nginx-config.hbs
+          envFrom:
+            - configMapRef:
+                name: bitwarden-environment
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: {{ .Chart.Name }}-key-connector
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: bitwarden/key-connector
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http-key
+              containerPort: 5100
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "helm-bitwarden-unified.fullname" . }}-key-connector-environment
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: certs
+          secret:
+            secretName: {{ include "helm-bitwarden-unified.fullname" . }}-certificate
+        - name: bitwarden-data
+          persistentVolumeClaim:
+            claimName: {{ include "helm-bitwarden-unified.fullname" . }}-data
+        - name: bitwarden-files
+          configMap:
+            name: {{ include "helm-bitwarden-unified.fullname" . }}-files

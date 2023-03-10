@@ -56,7 +56,7 @@ spec:
               subPath: nginx-config.hbs
           envFrom:
             - configMapRef:
-                name: bitwarden-environment
+                name: {{ include "helm-bitwarden-unified.fullname" . }}-environment
           livenessProbe:
             httpGet:
               path: /

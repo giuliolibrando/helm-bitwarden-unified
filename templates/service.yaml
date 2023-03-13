@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "helm-bitwarden-unified.fullname" . }}
+  name: {{ include "bitwarden-unified.fullname" . }}
   labels:
-    {{- include "helm-bitwarden-unified.labels" . | nindent 4 }}
+    {{- include "bitwarden-unified.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -16,4 +16,4 @@ spec:
       protocol: TCP
       name: https
   selector:
-    {{- include "helm-bitwarden-unified.selectorLabels" . | nindent 4 }}
+    {{- include "bitwarden-unified.selectorLabels" . | nindent 4 }}

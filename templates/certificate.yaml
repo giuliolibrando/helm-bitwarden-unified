@@ -1,12 +1,18 @@
+{{- if index .Values "cert-manager" "enabled" -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ include "helm-bitwarden-unified.fullname" . }}-certificate
+  {{- range .Values.ingress.tls }}
+  name: {{ .secretName }}
+  {{- end }}
 spec:
   commonName: {{ .Values.environment.BW_DOMAIN }}
-  secretName: bitwarden-certificate
+  {{- range .Values.ingress.tls }}
+  secretName: {{ .secretName }}
+  {{- end }}
   dnsNames:
     - {{ .Values.environment.BW_DOMAIN }}
   issuerRef:
-    name: letsencrypt
-    kind: ClusterIssuer
+    name: {{ index .Values "cert-manager" "issuerName" }}
+    kind: {{ index .Values "cert-manager" "issuerKind"}}
+{{- end }}    

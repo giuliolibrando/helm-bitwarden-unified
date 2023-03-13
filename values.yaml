@@ -1,4 +1,4 @@
-# Default values for helm-bitwarden-unified.
+# Default values for bitwarden-unified.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -42,17 +42,17 @@ service:
 
 ingress:
   enabled: true
-  className: ""
+  className: "traefik"
   annotations: {}
   hosts:
-    - host: bitwarden.example.com
+    - host: url
       paths:
         - path: /
           pathType: Prefix
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  tls: 
+    - secretName: bitwarden-unified-tls
+      hosts:
+        - url
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -79,15 +79,20 @@ tolerations: []
 
 affinity: {}
 
+cert-manager:
+  enabled: true
+  issuerName: name
+  issuerKind: ClusterIssuer
+
 environment:
-  BW_DOMAIN: bitwarden.example.com
+  BW_DOMAIN: url
 
   ###
   # Database Settings
   # These should match mariadb below
   ###
   BW_DB_PROVIDER: mariadb
-  BW_DB_SERVER: "bitwarden-mariadb"
+  BW_DB_SERVER: "bitwarden-unified-mariadb"
   BW_DB_DATABASE: "bitwarden"
   BW_DB_USERNAME: "bitwarden"
   BW_DB_PASSWORD: "Passw0rd"
@@ -105,26 +110,27 @@ environment:
   BW_PORT_HTTP: 8080
   BW_PORT_HTTPS: 8443
   BW_ENABLE_EVENTS: "true"
-  BW_ENABLE_SCIM: "false"
+  BW_ENABLE_SCIM: "true"
   BW_ENABLE_SSO: "true"
+  BW_DB_PORT: 3306
   BW_ENABLE_KEY_CONNECTOR: "true"
 
   ###
   # Email Settings
   ###
-  globalSettings__mail__replyToEmail: "noreply@example.com"
-  globalSettings__mail__smtp__host: "mail.example.com"
-  globalSettings__mail__smtp__port: "587"
-  globalSettings__mail__smtp__username: "user@example.com"
+  globalSettings__mail__replyToEmail: "bitwarden@url"
+  globalSettings__mail__smtp__host: ""
+  globalSettings__mail__smtp__port: ""
+  globalSettings__mail__smtp__username: "bitwarden@url"
   globalSettings__mail__smtp__password: "Passw0rd"
-
+  globalSettings__mail__smtp__ssl: "false"
   # List of Admin email Addresses for admin login ability
-  adminSettings__admins: "admin@example.com"
+  adminSettings__admins: ""
 
   ###
   # letsencrypt SSL
   ###
-  BW_ENABLE_SSL: "true"
+  BW_ENABLE_SSL: "false"
   ssl_certificate_path: "/etc/bitwarden/ssl.crt"
   ssl_key_path: "/etc/bitwarden/ssl.key"
 
@@ -140,9 +146,9 @@ keyConnector:
     keyConnectorSettings__rsaKey__awsRegion: RegionName
     keyConnectorSettings__rsaKey__awsKeyId: KeyId
     # URL to your bitwarden instance
-    keyConnectorSettings__webVaultUri: https://bitwarden.example.com
+    keyConnectorSettings__webVaultUri: url
     # Do Not Change this line
-    keyConnectorSettings__identityServerUri: http://localhost:5005
+    keyConnectorSettings__identityServerUri: url/identity/
     # Do Not Change this line
     ASPNETCORE_URLS: http://+:5100
 

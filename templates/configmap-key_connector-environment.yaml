@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "helm-bitwarden-unified.fullname" . }}-key-connector-environment
+  name: {{ include "bitwarden-unified.fullname" . }}-key-connector-environment
 data:
 {{- range $key, $val := .Values.keyConnector.environment }}
   {{ $key }}: "{{ $val }}"

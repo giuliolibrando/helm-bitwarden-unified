@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "helm-bitwarden-unified.fullname" . }}
+  name: {{ include "bitwarden-unified.fullname" . }}
   labels:
-    {{- include "helm-bitwarden-unified.labels" . | nindent 4 }}
+    {{- include "bitwarden-unified.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "helm-bitwarden-unified.selectorLabels" . | nindent 6 }}
+      {{- include "bitwarden-unified.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "helm-bitwarden-unified.selectorLabels" . | nindent 8 }}
+        {{- include "bitwarden-unified.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "helm-bitwarden-unified.serviceAccountName" . }}
+      serviceAccountName: {{ include "bitwarden-unified.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -56,7 +56,7 @@ spec:
               subPath: nginx-config.hbs
           envFrom:
             - configMapRef:
-                name: {{ include "helm-bitwarden-unified.fullname" . }}-environment
+                name: {{ include "bitwarden-unified.fullname" . }}-environment
           livenessProbe:
             httpGet:
               path: /
@@ -78,7 +78,7 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: {{ include "helm-bitwarden-unified.fullname" . }}-key-connector-environment
+                name: {{ include "bitwarden-unified.fullname" . }}-key-connector-environment
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -94,10 +94,12 @@ spec:
       volumes:
         - name: certs
           secret:
-            secretName: {{ include "helm-bitwarden-unified.fullname" . }}-certificate
+            {{- range .Values.ingress.tls }}
+            secretName: {{ .secretName }}
+            {{- end }}
         - name: bitwarden-data
           persistentVolumeClaim:
-            claimName: {{ include "helm-bitwarden-unified.fullname" . }}-data
+            claimName: {{ include "bitwarden-unified.fullname" . }}-data
         - name: bitwarden-files
           configMap:
-            name: {{ include "helm-bitwarden-unified.fullname" . }}-files
+            name: {{ include "bitwarden-unified.fullname" . }}-files

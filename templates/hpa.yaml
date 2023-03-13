@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "helm-bitwarden-unified.fullname" . }}
+  name: {{ include "bitwarden-unified.fullname" . }}
   labels:
-    {{- include "helm-bitwarden-unified.labels" . | nindent 4 }}
+    {{- include "bitwarden-unified.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "helm-bitwarden-unified.fullname" . }}
+    name: {{ include "bitwarden-unified.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
